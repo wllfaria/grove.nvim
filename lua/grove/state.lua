@@ -1,11 +1,31 @@
+---@class CursorPosition
+---@field row number
+---@field col number
+
+---@class GroveProject
+---@field path string
+---@field entrypoint string
+---@field cursor CursorPosition
+
+---@class RecoverBuffer
+---@field buf_id number
+---@field is_modifiable boolean
+---@field is_modified boolean
+
 ---@class GroveState
----@field buffer_id number | nil
----@field buffer_lines string[] | nil
----@field current_directory table
-local M = {
-    buffer_id = nil,
-    buffer_lines = nil,
-    current_directory = {},
+---@field buf_id? number
+---@field win_id? number
+---@field recover_buf RecoverBuffer
+---@field projects table<string, GroveProject>
+local GroveState = {
+    buf_id = nil,
+    win_id = nil,
+    recover_buf = {
+        buf_id = 0,
+        is_modifiable = false,
+        is_modified = false,
+    },
+    projects = {},
 }
 
-return M
+return GroveState

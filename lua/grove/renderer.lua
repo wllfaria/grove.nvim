@@ -1,17 +1,37 @@
-local state = require("grove.state")
+local GroveKeymapper = require("grove.keymapper")
+local GroveState = require("grove.state")
 
-local M = {}
+local GroveRenderer = {}
 
-M.render_current_directory = function()
-    vim.bo[state.buffer_id].modifiable = true
-    vim.api.nvim_buf_set_lines(
-        state.buffer_id,
-        0,
-        -1,
-        true,
-        state.current_directory
+function GroveRenderer:render_projects()
+    local projects = {}
+    for project in pairs(GroveState.projects) do
+        table.insert(projects, project)
+    end
+
+    GroveState.buf_id = vim.api.nvim_create_buf(false, true)
+    vim.api.nvim_buf_set_lines(GroveState.buf_id, 0, -1, true, projects)
+    vim.bo[GroveState.buf_id].modifiable = true
+
+    GroveState.win_id = vim.api.nvim_get_current_win()
+    GroveState.recover_buf.buf_id = vim.api.nvim_get_current_buf()
+    GroveState.recover_buf.is_modifiable =
+        vim.bo[GroveState.recover_buf.buf_id].modifiable
+    GroveState.recover_buf.is_modified = vim.api.nvim_get_option_value(
+        "modified",
+        { buf = GroveState.recover_buf.buf_id }
     )
-    vim.bo[state.buffer_id].modifiable = true
+
+    vim.api.nvim_win_set_buf(GroveState.win_id, GroveState.buf_id)
+
+    GroveKeymapper:set_keymaps()
 end
 
-return M
+function GroveRenderer:render_original()
+    local buf = GroveState.recover_buf
+    vim.api.nvim_buf_delete(GroveState.buf_id, { force = true })
+    vim.api.nvim_win_set_buf(GroveState.win_id, buf.buf_id)
+    vim.bo[buf.buf_id].modifiable = buf.is_modifiable
+end
+
+return GroveRenderer
