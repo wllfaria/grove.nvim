@@ -6,7 +6,7 @@ function GroveKeymapper:_buf_keymap(buf_id, mode, lhs, rhs, opts)
     vim.api.nvim_buf_set_keymap(buf_id, mode, lhs, rhs, opts)
 end
 
-function GroveKeymapper:set_keymaps()
+function GroveKeymapper:set_buf_keymaps()
     GroveKeymapper:_buf_keymap(
         GroveState.buf_id,
         "n",

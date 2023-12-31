@@ -1,4 +1,3 @@
-local GroveConstants = require("grove.constants")
 local GroveState = require("grove.state")
 
 ---@class GroveFileSystem

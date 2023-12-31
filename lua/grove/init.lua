@@ -12,7 +12,9 @@ function Grove:open_window()
 end
 
 function Grove:close_window()
-    GroveActions:restore_original()
+    if vim.api.nvim_buf_is_valid(GroveState.buf_id) then
+        GroveActions:restore_original()
+    end
 end
 
 function Grove:switch_project()
@@ -24,8 +26,9 @@ function Grove:switch_project()
         )
         return
     end
+    ---@type string
     local line = vim.api.nvim_get_current_line()
-    local project = GroveState.projects[line]
+    local project = GroveState.projects[line:sub(0, -2)]
     if project then
         vim.cmd("cd " .. project.path)
     end
@@ -47,15 +50,15 @@ function Grove:add_project()
 end
 
 function Grove.setup()
+    -- TODO: move this to a colorscheme file
+    -- maybe also make this configurable
+    vim.cmd([[
+        hi GroveDirectory guifg=#90a4b4
+    ]])
     vim.keymap.set(
         "n",
         GroveConfig.keymap.open,
         "<cmd>lua require('grove'):open_window()<cr>"
-    )
-    vim.keymap.set(
-        "n",
-        GroveConfig.keymap.close,
-        "<cmd>lua require('grove'):close_window()<cr>"
     )
     vim.keymap.set(
         "n",

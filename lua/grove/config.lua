@@ -5,9 +5,8 @@ local GroveConfig = {
     enalbe_entrypoint = false,
     update_entrypoint = false,
     keymap = {
-        open = "<leader><leader>=",
-        close = "<leader><leader>-",
-        refresh = "<leader><leader>r",
+        open = "cp",
+        close = "q",
     },
 }
 
