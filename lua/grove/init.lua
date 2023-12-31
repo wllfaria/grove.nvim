@@ -26,11 +26,20 @@ function Grove:add_project()
     GroveActions:add_project()
 end
 
+function Grove:confirm_changes()
+    GroveView:confirm_changes()
+end
+
+function Grove:cancel_changes()
+    GroveView:close_confirm_float()
+end
+
 function Grove.setup()
     -- TODO: move this to a colorscheme file
     -- maybe also make this configurable
     vim.cmd([[
         hi GroveDirectory guifg=#90a4b4
+        hi GroveDeletedProject guifg=#C3423F
     ]])
     vim.keymap.set(
         "n",

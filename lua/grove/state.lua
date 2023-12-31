@@ -17,9 +17,13 @@
 ---@field win_id? number
 ---@field recover_buf GroveRecoverBuf
 ---@field projects table<string, GroveProject>
+---@field float_win_id? number
+---@field float_buf_id? number
 local GroveState = {
     buf_id = nil,
     win_id = nil,
+    float_win_id = nil,
+    float_buf_id = nil,
     recover_buf = {
         buf_id = 0,
         is_modifiable = false,

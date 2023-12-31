@@ -31,19 +31,20 @@ function GroveBuffer:close_list(buf_id)
 end
 
 ---@param buf_id number
-function GroveBuffer:set_autocmds(buf_id)
+---@param write_cb function
+function GroveBuffer:set_autocmds(buf_id, write_cb)
     vim.api.nvim_create_autocmd({ "BufWriteCmd" }, {
         group = GROVE_GROUP,
         buffer = buf_id,
         callback = function()
-            print("this will eventually update the project list")
+            write_cb(buf_id)
         end,
     })
     vim.api.nvim_create_autocmd({ "BufLeave" }, {
         group = GROVE_GROUP,
         buffer = buf_id,
         callback = function()
-            GroveBuffer:close_list(buf_id)
+            -- GroveBuffer:close_list(buf_id)
         end,
     })
 end
@@ -51,6 +52,13 @@ end
 ---@param buf_id number
 function GroveBuffer:set_keymaps(buf_id)
     for lhs, rhs in pairs(GroveConstants.buffer_keymaps) do
+        vim.api.nvim_buf_set_keymap(buf_id, "n", lhs, rhs, {})
+    end
+end
+
+---@param buf_id number
+function GroveBuffer:set_confirm_keymaps(buf_id)
+    for lhs, rhs in pairs(GroveConstants.confirm_keymaps) do
         vim.api.nvim_buf_set_keymap(buf_id, "n", lhs, rhs, {})
     end
 end
