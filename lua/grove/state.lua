@@ -28,4 +28,13 @@ local GroveState = {
     projects = {},
 }
 
+---@return string[]
+function GroveState:_projects_as_list()
+    local projects = {}
+    for project in pairs(self.projects) do
+        table.insert(projects, project .. "/")
+    end
+    return projects
+end
+
 return GroveState

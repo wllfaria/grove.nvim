@@ -1,6 +1,5 @@
 local GroveConfig = require("grove.config")
 local GroveFileSystem = require("grove.fs")
-local GroveRenderer = require("grove.renderer")
 local GroveState = require("grove.state")
 
 local GroveActions = {}
@@ -45,14 +44,6 @@ function GroveActions:add_project()
     }
     GroveState.projects[project_name] = project
     GroveFileSystem:write_projects()
-end
-
-function GroveActions:open_window()
-    GroveRenderer:render_projects()
-end
-
-function GroveActions:restore_original()
-    GroveRenderer:render_original()
 end
 
 return GroveActions
