@@ -1,4 +1,3 @@
-local GroveActions = require("grove.actions")
 local GroveConfig = require("grove.config")
 local GroveFileSystem = require("grove.fs")
 local GroveState = require("grove.state")
@@ -8,7 +7,7 @@ local GroveView = require("grove.view")
 local Grove = {}
 
 function Grove:open_window()
-    GroveActions:update_projects()
+    GroveView:update_projects()
     GroveView:open_window()
 end
 
@@ -23,7 +22,7 @@ function Grove:select_project()
 end
 
 function Grove:add_project()
-    GroveActions:add_project()
+    GroveView:add_project()
 end
 
 function Grove:confirm_changes()
