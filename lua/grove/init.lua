@@ -1,6 +1,5 @@
 local GroveBuffer = require("grove.buffer")
 local GroveConfig = require("grove.config")
-local GroveConstants = require("grove.constants")
 local GroveFileSystem = require("grove.fs")
 local GroveUtil = require("grove.util")
 local GroveView = require("grove.view")
@@ -16,7 +15,9 @@ Grove.__index = Grove
 
 function Grove:new()
     local config = GroveConfig:default_config()
-    local fs = GroveFileSystem:new()
+    local history_path = vim.fn.stdpath("data") .. "/grove_history.json"
+    local list_path = vim.fn.stdpath("data") .. "/grove_list"
+    local fs = GroveFileSystem:new(history_path, list_path)
     local grove = setmetatable({
         config = config,
         fs = fs,
@@ -63,7 +64,7 @@ function Grove:handle_list_update(buf_id)
     end
     local line, padding = GroveUtil:center_line(
         "[O]k   [C]ancel",
-        GroveConstants.confirm_float_width
+        self.view.layout.confirm_float.width
     )
     table.insert(modified_list, line)
     if vim.tbl_isempty(modified) then
@@ -106,12 +107,12 @@ end
 function Grove:open_window()
     local project_name = self.fs:get_current_project_name()
     self.view:update_projects(project_name)
-    self.fs.write_list(self.view:_projects_as_list())
-    local buf, win = self.buffer:open_list()
+    self.fs:write_list(self.view:_projects_as_list())
     local recover_buf = self.buffer:current_buffer()
+    local buf, win = self.buffer:open_list(self.fs.list_path)
     self.view:open_window(buf, win, recover_buf)
-    self.buffer:set_autocmds(buf, self.handle_list_update)
     self.buffer:set_keymaps(buf)
+    self.buffer:set_autocmds(buf, self.handle_list_update)
 end
 
 function Grove:close_window()
