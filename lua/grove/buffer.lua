@@ -1,5 +1,3 @@
-local GroveConstants = require("grove.constants")
-
 ---@class GroveBuffer
 local GroveBuffer = {}
 
@@ -10,7 +8,6 @@ function GroveBuffer:new()
 end
 
 local GROVE_GROUP = vim.api.nvim_create_augroup("Grove", {})
-local LIST_PATH = vim.fn.stdpath("data") .. "/grove_list"
 
 ---@return GroveRecoverBuf
 function GroveBuffer:current_buffer()
@@ -21,8 +18,9 @@ function GroveBuffer:current_buffer()
 end
 
 ---@return number, number
-function GroveBuffer:open_list()
-    vim.cmd.edit(LIST_PATH)
+---@param path string
+function GroveBuffer:open_list(path)
+    vim.cmd.edit(path)
     local buf = vim.api.nvim_get_current_buf()
     local win = vim.api.nvim_get_current_win()
     return buf, win
@@ -54,16 +52,30 @@ end
 
 ---@param buf_id number
 function GroveBuffer:set_keymaps(buf_id)
-    for lhs, rhs in pairs(GroveConstants.buffer_keymaps) do
-        vim.api.nvim_buf_set_keymap(buf_id, "n", lhs, rhs, {})
-    end
+    vim.keymap.set("n", "q", function()
+        local grove = require("grove")
+        grove:close_window()
+    end, { silent = true, buffer = buf_id })
+    vim.keymap.set("n", "<CR>", function()
+        local grove = require("grove")
+        grove:select_project()
+    end, { silent = true, buffer = buf_id })
 end
 
 ---@param buf_id number
 function GroveBuffer:set_confirm_keymaps(buf_id)
-    for lhs, rhs in pairs(GroveConstants.confirm_keymaps) do
-        vim.api.nvim_buf_set_keymap(buf_id, "n", lhs, rhs, {})
-    end
+    vim.keymap.set("n", "o", function()
+        local grove = require("grove")
+        grove:confirm_changes()
+    end, { silent = true, buffer = buf_id })
+    vim.keymap.set("n", "c", function()
+        local grove = require("grove")
+        grove:cancel_changes()
+    end, { silent = true, buffer = buf_id })
+    vim.keymap.set("n", "<C-c>", function()
+        local grove = require("grove")
+        grove:cancel_changes()
+    end, { silent = true, buffer = buf_id })
 end
 
 return GroveBuffer

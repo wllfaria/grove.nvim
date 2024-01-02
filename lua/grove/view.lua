@@ -1,4 +1,3 @@
-local GroveConstants = require("grove.constants")
 local GroveUtil = require("grove.util")
 
 ---@class GroveCursor
@@ -17,6 +16,13 @@ local GroveUtil = require("grove.util")
 
 ---@alias ProjectList table<string, GroveProject>
 
+---@class ConfirmFloatLayout
+---@field width number
+---@field height number
+
+---@class GroveLayout
+---@field confirm_float ConfirmFloatLayout
+
 ---@class GroveView
 ---@field buf_id number
 ---@field win_id number
@@ -25,11 +31,19 @@ local GroveUtil = require("grove.util")
 ---@field recover_buf GroveRecoverBuf
 ---@field config GroveConfig
 ---@field projects ProjectList
+---@field layout GroveLayout
 local GroveView = {}
 
 GroveView.__index = GroveView
 
+---@param config GroveConfig
+---@param projects ProjectList
+---@return GroveView
 function GroveView:new(config, projects)
+    local confirm_float = {
+        width = math.floor(vim.o.columns * 0.6),
+        height = math.floor(vim.o.lines * 0.8),
+    }
     return setmetatable({
         buf_id = nil,
         win_id = nil,
@@ -37,6 +51,9 @@ function GroveView:new(config, projects)
         float_win_id = nil,
         config = config,
         projects = projects,
+        layout = {
+            confirm_float,
+        },
     }, self)
 end
 
@@ -67,9 +84,9 @@ end
 
 ---@param buf_id number
 function GroveView:open_float(buf_id, lines)
-    local max_height = GroveConstants.confirm_float_height
+    local max_height = self.layout.confirm_float.height
     local height = max_height > lines and lines or max_height
-    local width = GroveConstants.confirm_float_width
+    local width = math.floor(vim.o.columns * 0.6)
     local win = vim.api.nvim_open_win(buf_id, true, {
         relative = "editor",
         width = width,
