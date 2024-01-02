@@ -1,11 +1,18 @@
 local GroveConstants = require("grove.constants")
-local GroveState = require("grove.state")
 
+---@class GroveBuffer
 local GroveBuffer = {}
+
+GroveBuffer.__index = GroveBuffer
+
+function GroveBuffer:new()
+    return setmetatable({}, self)
+end
 
 local GROVE_GROUP = vim.api.nvim_create_augroup("Grove", {})
 local LIST_PATH = vim.fn.stdpath("data") .. "/grove_list"
 
+---@return GroveRecoverBuf
 function GroveBuffer:current_buffer()
     local buf = vim.api.nvim_get_current_buf()
     local modified = vim.api.nvim_get_option_value("modified", { buf = buf })
@@ -13,10 +20,10 @@ function GroveBuffer:current_buffer()
     return { buf_id = buf, is_modifiable = modifiable, is_modified = modified }
 end
 
+---@param project_list string[]
 ---@return number, number
-function GroveBuffer:open_list()
-    local projects = GroveState:_projects_as_list()
-    vim.fn.writefile(projects, LIST_PATH)
+function GroveBuffer:open_list(project_list)
+    vim.fn.writefile(project_list, LIST_PATH)
     vim.cmd.edit(LIST_PATH)
     local buf = vim.api.nvim_get_current_buf()
     local win = vim.api.nvim_get_current_win()
@@ -27,7 +34,6 @@ end
 function GroveBuffer:close_list(buf_id)
     vim.fn.delete(LIST_PATH)
     vim.api.nvim_buf_delete(buf_id, { force = true })
-    GroveState.buf_id = nil
 end
 
 ---@param buf_id number

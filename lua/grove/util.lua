@@ -19,4 +19,12 @@ function GroveUtil:center_line(line, width)
     return centered_line, padding
 end
 
+---@param project_path string
+---@param file_path string
+---@return string
+function GroveUtil:get_relative_path(project_path, file_path)
+    local relative_path = file_path:gsub(project_path, "")
+    return relative_path
+end
+
 return GroveUtil
