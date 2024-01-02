@@ -33,6 +33,18 @@ function GroveFileSystem:_create_sessions_dir()
     end
 end
 
+---@param list string[]
+function GroveFileSystem:write_list(list)
+    local file_path = vim.fn.stdpath("data") .. "/grove_list"
+    local file = io.open(file_path, "w")
+    if file then
+        for _, line in pairs(list) do
+            file:write(line .. "\n")
+        end
+        file:close()
+    end
+end
+
 ---@param projects ProjectList
 function GroveFileSystem:write_projects(projects)
     local file_path = vim.fn.stdpath("data") .. "/grove_history.json"
