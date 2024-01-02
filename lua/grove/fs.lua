@@ -1,19 +1,25 @@
-local GroveState = require("grove.state")
-
 ---@class GroveFileSystem
 local GroveFileSystem = {}
 
+GroveFileSystem.__index = GroveFileSystem
+
+function GroveFileSystem:new()
+    return setmetatable({}, self)
+end
+
+---@return ProjectList
 function GroveFileSystem:load_sessions()
     local file_path = vim.fn.stdpath("data") .. "/grove_history.json"
     if vim.fn.filereadable(file_path) == 0 then
         GroveFileSystem:_create_sessions_dir()
     end
     local file = io.open(file_path, "r")
-    if file then
-        local content = file:read("*a")
-        file:close()
-        GroveState.projects = vim.fn.json_decode(content)
+    if not file then
+        return {}
     end
+    local content = file:read("*a")
+    file:close()
+    return vim.fn.json_decode(content)
 end
 
 function GroveFileSystem:_create_sessions_dir()
@@ -27,34 +33,19 @@ function GroveFileSystem:_create_sessions_dir()
     end
 end
 
----@return GroveProject?
-function GroveFileSystem:get_current_project()
-    local project_name = GroveFileSystem:get_project_name()
-    return GroveState.projects[project_name]
-end
-
----@param project_path string
----@param file_path string
----
----@return string
-function GroveFileSystem:get_relative_path(project_path, file_path)
-    local relative_path = file_path:gsub(project_path, "")
-    print(relative_path)
-    return relative_path
-end
-
-function GroveFileSystem:write_projects()
+---@param projects ProjectList
+function GroveFileSystem:write_projects(projects)
     local file_path = vim.fn.stdpath("data") .. "/grove_history.json"
     local file = io.open(file_path, "w")
     if file then
-        local content = vim.fn.json_encode(GroveState.projects)
+        local content = vim.fn.json_encode(projects)
         file:write(content)
         file:close()
     end
 end
 
 ---@return string
-function GroveFileSystem:get_project_name()
+function GroveFileSystem:get_current_project_name()
     local cwd = vim.fn.getcwd()
     if not cwd then
         return ""
