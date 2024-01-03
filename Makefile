@@ -6,6 +6,6 @@ lint:
 
 test:
 	nvim --headless --noplugin -u scripts/tests/minimal.vim \
-		-c 'PlenaryBustedDirectory tests/ {minimal_init = "scripts/tests/minimal.vim"}'
+		-c 'PlenaryBustedDirectory tests/ {minimal_init = "scripts/tests/minimal.vim", sequential = true}'
 
 all: format lint test

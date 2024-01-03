@@ -28,7 +28,12 @@ function Grove:new()
 end
 
 function Grove:open_window()
-    local project_name = self.fs:get_current_project_name()
+    local cwd = vim.fn.getcwd()
+    if not cwd then
+        error("Could not get current working directory")
+        return
+    end
+    local project_name = self.fs:get_current_project_name(cwd)
     self.view:update_projects(project_name)
     self.fs:write_list(self.view:_projects_as_list())
     local recover_buf = self.buffer:current_buffer()
@@ -49,13 +54,12 @@ function Grove:select_project()
 end
 
 function Grove:add_project()
-    local project_name = self.fs:get_current_project_name()
-    print(project_name)
     local cwd = vim.fn.getcwd()
     if not cwd then
         error("Could not get current working directory")
         return
     end
+    local project_name = self.fs:get_current_project_name(cwd)
     local projects = self.view:add_project(cwd, project_name)
     self.fs:write_projects(projects)
 end

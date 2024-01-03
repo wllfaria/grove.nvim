@@ -25,7 +25,7 @@ end
 ---@return ProjectList
 function GroveFileSystem:load_sessions()
     if vim.fn.filereadable(self.history_path) == 0 then
-        GroveFileSystem:_create_sessions_dir()
+        self:_create_history_file()
     end
     local file = io.open(self.history_path, "r")
     if not file then
@@ -39,10 +39,9 @@ function GroveFileSystem:load_sessions()
     return vim.fn.json_decode(content)
 end
 
-function GroveFileSystem:_create_sessions_dir()
-    local file_path = vim.fn.stdpath("data") .. "/grove_history.json"
-    if vim.fn.filereadable(file_path) == 0 then
-        local file = io.open(file_path, "w")
+function GroveFileSystem:_create_history_file()
+    if vim.fn.filereadable(self.history_path) == 0 then
+        local file = io.open(self.history_path, "w")
         if file then
             file:write("{}")
             file:close()
@@ -71,17 +70,13 @@ function GroveFileSystem:write_projects(projects)
     end
 end
 
+---@param path string
 ---@return string
-function GroveFileSystem:get_current_project_name()
-    local cwd = vim.fn.getcwd()
-    if not cwd then
-        return ""
-    end
-    ---@type string[]
+function GroveFileSystem:get_current_project_name(path)
     local segments = {}
     local separator = package.config:sub(1, 1)
-    for segment in cwd:gmatch("[^" .. separator .. "]+") do
-        segments[#segments + 1] = segment
+    for segment in path:gmatch("[^" .. separator .. "]+") do
+        table.insert(segments, segment)
     end
     return segments[#segments]
 end

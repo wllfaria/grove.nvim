@@ -42,6 +42,8 @@ describe("Buffer", function()
     end)
 
     it("should close a list buffer", function()
+        grove.fs:_configure(history_path, list_path)
+        grove.fs:write_list(test_list)
         local buf, win = grove.buffer:open_list(list_path)
         local written = vim.fn.readfile(list_path)
         local buf_before_quit = vim.api.nvim_get_current_buf()
