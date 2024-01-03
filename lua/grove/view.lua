@@ -32,6 +32,7 @@ local GroveUtil = require("grove.util")
 ---@field config GroveConfig
 ---@field projects ProjectList
 ---@field layout GroveLayout
+---@field modified_projects ProjectList
 local GroveView = {}
 
 GroveView.__index = GroveView
@@ -52,7 +53,7 @@ function GroveView:new(config, projects)
         config = config,
         projects = projects,
         layout = {
-            confirm_float,
+            confirm_float = confirm_float,
         },
     }, self)
 end
@@ -71,6 +72,7 @@ end
 ---@param recover_buf GroveRecoverBuf
 function GroveView:open_window(buf, win, recover_buf)
     self.recover_buf = recover_buf
+    print(recover_buf.buf_id)
     self.buf_id = buf
     self.win_id = win
 end
@@ -79,11 +81,11 @@ function GroveView:close_window()
     local buf = self.recover_buf
     vim.api.nvim_win_set_buf(self.win_id, buf.buf_id)
     vim.bo[buf.buf_id].modifiable = buf.is_modifiable
-    self.buf_id = nil
 end
 
 ---@param buf_id number
 function GroveView:open_float(buf_id, lines)
+    local grove = require("grove")
     local max_height = self.layout.confirm_float.height
     local height = max_height > lines and lines or max_height
     local width = math.floor(vim.o.columns * 0.6)
@@ -107,15 +109,26 @@ function GroveView:open_float(buf_id, lines)
     end, 10)
     self.float_win_id = win
     self.float_buf_id = buf_id
+    grove.buffer:set_float_autocmds(win, buf_id)
 end
 
 function GroveView:close_confirm_float()
     vim.api.nvim_win_close(self.float_win_id, true)
     vim.api.nvim_buf_delete(self.float_buf_id, { force = true })
+    vim.api.nvim_set_current_win(self.win_id)
+    self.float_win_id = nil
+    self.float_buf_id = nil
 end
 
+---@return ProjectList
 function GroveView:confirm_changes()
-    print("confirm changes")
+    local remaining_projects = {}
+    for name, project in pairs(self.projects) do
+        if not self.modified_projects[name] then
+            remaining_projects[name] = project
+        end
+    end
+    return remaining_projects
 end
 
 function GroveView:select_project()
@@ -129,6 +142,7 @@ function GroveView:select_project()
     end
     local line = vim.api.nvim_get_current_line()
     local project = self.projects[line:sub(0, -2)]
+    print("project", project)
     if not project then
         vim.notify("Project not found", vim.log.levels.ERROR)
     end
@@ -177,6 +191,51 @@ function GroveView:update_projects(project_name)
     project.cursor.row = vim.fn.line(".") and vim.fn.line(".") or 1
     project.entrypoint = GroveUtil:get_relative_path(project.path, current_file)
     return self.projects
+end
+
+---@param buf number
+---@param highlights table<string, table>
+---@param padding number
+---@param total_lines number
+function GroveView:add_float_highlights(buf, highlights, padding, total_lines)
+    for _, highlight in pairs(highlights) do
+        vim.api.nvim_buf_add_highlight(
+            buf,
+            -1,
+            highlight.group,
+            highlight.line,
+            highlight.col,
+            highlight.end_col
+        )
+    end
+    -- NOTE: I feel like there's a better way to do this
+    vim.api.nvim_buf_add_highlight(
+        buf,
+        -1,
+        "GroveDirectory",
+        total_lines - 1,
+        padding,
+        padding + 3
+    )
+    vim.api.nvim_buf_add_highlight(
+        buf,
+        -1,
+        "GroveDirectory",
+        total_lines - 1,
+        padding + 7,
+        padding + 10
+    )
+end
+
+---Center a line of text in a given width and returs `line`, `padding`.
+---@param line string
+---@param width number
+---@return string, number
+function GroveView:center_line(line, width)
+    local line_length = string.len(line)
+    local padding = math.floor((width - line_length) / 2)
+    local centered_line = string.rep(" ", padding) .. line
+    return centered_line, padding
 end
 
 return GroveView

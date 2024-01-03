@@ -1,7 +1,6 @@
 local GroveBuffer = require("grove.buffer")
 local GroveConfig = require("grove.config")
 local GroveFileSystem = require("grove.fs")
-local GroveUtil = require("grove.util")
 local GroveView = require("grove.view")
 
 ---@class Grove
@@ -28,82 +27,6 @@ function Grove:new()
     return grove
 end
 
----@param buf_id number
--- TODO: fix this absolute mess
-function Grove:handle_list_update(buf_id)
-    local lines = vim.api.nvim_buf_get_lines(buf_id, 0, -1, true)
-    local lines_map = {}
-    for _, line in pairs(lines) do
-        lines_map[line] = true
-    end
-    local modified = {}
-    local modified_list = {}
-    local projects_list = self.view:_projects_as_list()
-    local highlights = {}
-    for _, project in pairs(projects_list) do
-        if lines_map[project] == nil then
-            -- TODO: find a way to add/edit projects within the list
-            local project_name = GroveUtil:trim_trailing_slash(project)
-            local prefix = " REMOVE "
-            modified[project] = self.view.projects[project_name]
-            table.insert(modified_list, prefix .. project)
-            highlights[#modified_list] = {
-                group = "GroveDeletedProject",
-                line = #modified_list - 1,
-                col = 0,
-                end_col = string.len(prefix),
-            }
-        end
-    end
-    if #modified_list < 8 then
-        for _ = 1, 2 do
-            table.insert(modified_list, "")
-        end
-    else
-        table.insert(modified_list, "")
-    end
-    local line, padding = GroveUtil:center_line(
-        "[O]k   [C]ancel",
-        self.view.layout.confirm_float.width
-    )
-    table.insert(modified_list, line)
-    if vim.tbl_isempty(modified) then
-        return
-    end
-    local buf = vim.api.nvim_create_buf(false, true)
-    vim.api.nvim_buf_set_lines(buf, 0, -1, true, modified_list)
-    vim.bo[buf].modifiable = false
-    for _, highlight in pairs(highlights) do
-        vim.api.nvim_buf_add_highlight(
-            buf,
-            -1,
-            highlight.group,
-            highlight.line,
-            highlight.col,
-            highlight.end_col
-        )
-    end
-    -- NOTE: I feel like there's a better way to do this
-    vim.api.nvim_buf_add_highlight(
-        buf,
-        -1,
-        "GroveDirectory",
-        #modified_list - 1,
-        padding,
-        padding + 3
-    )
-    vim.api.nvim_buf_add_highlight(
-        buf,
-        -1,
-        "GroveDirectory",
-        #modified_list - 1,
-        padding + 7,
-        padding + 10
-    )
-    GroveBuffer:set_confirm_keymaps(buf)
-    GroveView:open_float(buf, #modified_list)
-end
-
 function Grove:open_window()
     local project_name = self.fs:get_current_project_name()
     self.view:update_projects(project_name)
@@ -112,12 +35,13 @@ function Grove:open_window()
     local buf, win = self.buffer:open_list(self.fs.list_path)
     self.view:open_window(buf, win, recover_buf)
     self.buffer:set_keymaps(buf)
-    self.buffer:set_autocmds(buf, self.handle_list_update)
+    self.buffer:set_autocmds(buf)
 end
 
 function Grove:close_window()
-    self.buffer:close_list(self.view.buf_id)
     self.view:close_window()
+    self.buffer:close_list(self.view.buf_id)
+    self.view.buf_id = nil
 end
 
 function Grove:select_project()
@@ -126,6 +50,7 @@ end
 
 function Grove:add_project()
     local project_name = self.fs:get_current_project_name()
+    print(project_name)
     local cwd = vim.fn.getcwd()
     if not cwd then
         error("Could not get current working directory")
@@ -136,7 +61,13 @@ function Grove:add_project()
 end
 
 function Grove:confirm_changes()
-    self.view:confirm_changes()
+    print(vim.inspect(self.view.float_win_id))
+    print(vim.inspect(self.view.float_buf_id))
+    self.view:close_confirm_float()
+    local remaining_projects = self.view:confirm_changes()
+    self.view.projects = remaining_projects
+    self.view.modified_projects = {}
+    self.fs:write_projects(remaining_projects)
 end
 
 function Grove:cancel_changes()
@@ -145,11 +76,10 @@ end
 
 local grove = Grove:new()
 
----@param opts table
-function Grove.setup(self, opts)
+---@param _ table
+function Grove.setup(self, _)
     if self ~= grove then
-        ---@diagnostic disable-next-line: cast-local-type
-        opts = self
+        _ = self
         self = grove
     end
     local config = GroveConfig:default_config()
